@@ -30,9 +30,9 @@ module Zimt
     private
     def wrap(raw, recurse=true)
       if raw.is_a? Array
-        raw.map { |i| wrap(i) }
+        raw.map { |i| wrap(i, recurse) }
       elsif raw.is_a? Hash
-        new_hash = raw.inject({}) { |h,(k,v)| h[k] = wrap(v) ; h }
+        new_hash = raw.inject({}) { |h,(k,v)| h[k] = wrap(v, recurse) ; h }
         PBXHash.new(@pbxproj, new_hash)
       else
         if recurse and @pbxproj.objects.include? raw
