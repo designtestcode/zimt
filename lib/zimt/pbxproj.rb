@@ -20,9 +20,13 @@ module Zimt
     #        This is only two bytes even though most pids are longs.
     #        Here you would take the lower 2 bytes.
     # IP   = IP Address of the machine (subnet.hostId)
-    def self.uuid
+    def uuid
       # TODO
-      rand(16**24).to_s(16).upcase
+      @prefix ||= rand(16**4).to_s(16).upcase
+      @suffix ||= (Time.now.to_i.to_s(16) + rand(16**8).to_s(16)).upcase
+      @count ||= rand(16**4)
+      @count += 1
+      "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
     end
 
     attr_reader :hash, :objects, :root
