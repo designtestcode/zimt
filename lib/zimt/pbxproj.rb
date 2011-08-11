@@ -4,6 +4,13 @@ module Zimt
       `plutil -convert json -o - #{file}`
     end
 
+    def randhex(length=1)
+      @buffer = ""
+      length.times do
+        @buffer << rand(16).to_s(16).upcase
+      end
+      @buffer
+    end
 
     # Documentation on PBXObjectId by @tjw
     # http://lists.apple.com/archives/projectbuilder-users/2003/Jan/msg00263.html
@@ -22,8 +29,8 @@ module Zimt
     # IP   = IP Address of the machine (subnet.hostId)
     def uuid
       # TODO
-      @prefix ||= rand(16**4).to_s(16).upcase
-      @suffix ||= (Time.now.to_i.to_s(16) + rand(16**8).to_s(16)).upcase
+      @prefix ||= randhex(4)
+      @suffix ||= Time.now.to_i.to_s(16).upcase + randhex(8)
       @count ||= rand(16**4)
       @count += 1
       "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
@@ -63,12 +70,41 @@ module Zimt
     #			sourceTree = "<group>";
     #		};
     def add_zimt_group
+      # Add Zimt reference to mainGroup
       groupid = self.root.mainGroup.pbxid
       scan_to "\t\t#{groupid} = {"
       scan_to "\t\t\t);"
       newgroup = self.uuid
-
       self.content.insert(@position, "\t\t\t\t#{newgroup} /* Zimt */,\n")
+
+      # Find position for Zimt reference in PBXGRoup section
+      @position = 0
+      scan_to "/* Begin PBXGroup section */"
+      begin_position = @position
+      scan_to "/* End PBXGroup section */"
+      end_position = @position
+
+      @position = begin_position
+      while @position < end_position
+        line = self.content[@position]
+        if (line.end_with? " = {\n")
+          groupname = line.split(' ')[0]
+          if groupname > newgroup
+            break
+          end
+        end
+        @position += 1
+      end
+
+      # Add Zimt Group
+      self.content.insert(@position,
+                          "\t\t#{newgroup} /* Zimt */ = {\n",
+                          "\t\t\tisa = PBXGroup;\n",
+                          "\t\t\tchildren = (\n",
+                          "\t\t\t);\n",
+                          "\t\t\tpath = Zimt;\n",
+                          "\t\t\tsourceTree = \"<group>\";\n",
+                          "\t\t};\n")
     end
 
     def scan_to(what)
