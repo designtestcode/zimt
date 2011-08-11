@@ -2,8 +2,8 @@ module Zimt
   class CLI < Thor
     desc "add SPRINKLE", "Adds the sprinkle"
     def add(name)
-      puts Zimt.pbxproj.root.targets.first.dependencies
-      require 'ruby-debug' ; debugger
+      Zimt.pbxproj.add_zimt_group
+      Zimt.pbxproj.save!
       # TODO
     end
   end

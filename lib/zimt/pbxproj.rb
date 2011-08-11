@@ -29,16 +29,62 @@ module Zimt
       "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
     end
 
-    attr_reader :hash, :objects, :root
+    attr_reader :content, :hash, :objects, :root
+    attr_accessor :position
 
     def initialize(file)
+      @filename = file
+      @content = File.readlines(file)
       @hash = JSON.parse(PBXProj.plutil(file)).freeze
       @objects = @hash['objects']
       @root = PBXHash.new(self, @hash['rootObject'], @objects[@hash['rootObject']])
     end
 
+    def save!
+      puts @filename
+      File.open(@filename, "w") { |f|
+        f.write(self.content.join(''))
+      }
+    end
+
     def zimt_group
-      Zimt.pbxproj.root.mainGroup.children.select{ |g| g.name == 'Zimt' }.first
+      self.root.mainGroup.children.select{ |g| g.name == 'Zimt' }.first
+    end
+
+    #		C5FE9B6F13BA7537004CCA66 = {
+    #			isa = PBXGroup;
+    #			children = (
+    #				C5FE9B8413BA7537004CCA66 /* Sources */,
+    #				C7826AD313D9137D00661EEC /* Resources */,
+    #				C5FE9B7D13BA7537004CCA66 /* Frameworks */,
+    #				C5FE9B7B13BA7537004CCA66 /* Products */,
+    #				C5E20A8613F4507D00C5DDF3 /* Zimt */,
+    #			);
+    #			sourceTree = "<group>";
+    #		};
+    def add_zimt_group
+      groupid = self.root.mainGroup.pbxid
+      scan_to "\t\t#{groupid} = {"
+      scan_to "\t\t\t);"
+      newgroup = self.uuid
+
+      self.content.insert(@position, "\t\t\t\t#{newgroup} /* Zimt */,\n")
+    end
+
+    def scan_to(what)
+      @position ||= 0
+      while true
+        line = self.content[@position]
+        if line.start_with? what
+          return
+        end
+        @position += 1
+      end
+    end
+
+    def current_line
+      @position ||= 0
+      self.content[@position]
     end
   end
 
