@@ -34,7 +34,7 @@ module Zimt
     def initialize(file)
       @hash = JSON.parse(PBXProj.plutil(file)).freeze
       @objects = @hash['objects']
-      @root = PBXHash.new(self, @objects[@hash['rootObject']])
+      @root = PBXHash.new(self, @hash['rootObject'], @objects[@hash['rootObject']])
     end
 
     def zimt_group
@@ -43,8 +43,11 @@ module Zimt
   end
 
   class PBXHash
-    def initialize(pbxproj, node)
+    attr_reader :pbxid
+
+    def initialize(pbxproj, pbxid, node)
       @pbxproj = pbxproj
+      @pbxid = pbxid
       @node = node
     end
 
@@ -57,15 +60,15 @@ module Zimt
     end
 
     private
-    def wrap(raw, recurse=true)
+    def wrap(raw, recurse=true, id=nil)
       if raw.is_a? Array
         raw.map { |i| wrap(i, recurse) }
       elsif raw.is_a? Hash
         new_hash = raw.inject({}) { |h,(k,v)| h[k] = wrap(v, recurse) ; h }
-        PBXHash.new(@pbxproj, new_hash)
+        PBXHash.new(@pbxproj, id, new_hash)
       else
         if recurse and @pbxproj.objects.include? raw
-          wrap(@pbxproj.objects[raw], false)
+          wrap(@pbxproj.objects[raw], false, raw)
         else
           raw
         end
