@@ -32,6 +32,10 @@ module Zimt
       @objects = @hash['objects']
       @root = PBXHash.new(self, @objects[@hash['rootObject']])
     end
+
+    def zimt_group
+      Zimt.pbxproj.root.mainGroup.children.select{ |g| g.name == 'Zimt' }.first
+    end
   end
 
   class PBXHash
