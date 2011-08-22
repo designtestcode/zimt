@@ -42,20 +42,30 @@ module Zimt
     def initialize(file)
       @filename = file
       @content = File.readlines(file)
-      @hash = JSON.parse(PBXProj.plutil(file)).freeze
+      self.parse
+    end
+
+    def parse
+      @hash = JSON.parse(PBXProj.plutil(@filename)).freeze
       @objects = @hash['objects']
       @root = PBXHash.new(self, @hash['rootObject'], @objects[@hash['rootObject']])
     end
 
     def save!
-      puts @filename
       File.open(@filename, "w") { |f|
         f.write(self.content.join(''))
       }
     end
 
     def zimt_group
-      self.root.mainGroup.children.select{ |g| g.name == 'Zimt' }.first
+      self.root.mainGroup.children.select{ |g| g.path == 'Zimt' }.first
+    end
+
+    def ensure_zimt_group
+      zimt_group = self.zimt_group
+      if zimt_group.nil?
+        self.add_zimt_group
+      end
     end
 
     #		C5FE9B6F13BA7537004CCA66 = {
@@ -72,7 +82,7 @@ module Zimt
     def add_zimt_group
       # Add Zimt reference to mainGroup
       groupid = self.root.mainGroup.pbxid
-      scan_to "\t\t#{groupid} = {"
+      scan_to "\t\t#{groupid}"
       scan_to "\t\t\t);"
       newgroup = self.uuid
       self.content.insert(@position, "\t\t\t\t#{newgroup} /* Zimt */,\n")
@@ -105,12 +115,18 @@ module Zimt
                           "\t\t\tpath = Zimt;\n",
                           "\t\t\tsourceTree = \"<group>\";\n",
                           "\t\t};\n")
+
+      self.save!
+      self.parse
     end
 
     def scan_to(what)
       @position ||= 0
       while true
         line = self.content[@position]
+        if line.nil?
+          raise "#{what} not found"
+        end
         if line.start_with? what
           return
         end
