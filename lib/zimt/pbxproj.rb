@@ -33,7 +33,15 @@ module Zimt
       @suffix ||= Time.now.to_i.to_s(16).upcase + randhex(8)
       @count ||= rand(16**4)
       @count += 1
-      "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
+      if @count.to_s(16).length < 4
+        @count = @count * 16
+      end
+      uuid = "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
+      if uuid.length != 24
+        puts "uuid length wrong: #{uuid}"
+        exit
+      end
+      uuid
     end
 
     attr_reader :content, :hash, :objects, :root
@@ -115,6 +123,45 @@ module Zimt
                           "\t\t\tpath = Zimt;\n",
                           "\t\t\tsourceTree = \"<group>\";\n",
                           "\t\t};\n")
+
+      self.save!
+      self.parse
+    end
+
+    #/* Begin PBXFileReference section */
+    #		C5D0CB021406C3AA002E631F /* Hans.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hans.h; sourceTree = "<group>"; };
+    #/* End PBXFileReference section */
+    def add_file(file)
+      zimt_group_id = self.zimt_group.pbxid
+      # Add file to Zimt group
+      groupid = self.root.mainGroup.pbxid
+      scan_to "\t\t#{zimt_group_id}"
+      scan_to "\t\t\t);"
+      newgroup = self.uuid
+      self.content.insert(@position, "\t\t\t\t#{newgroup} /* #{file} */,\n")
+
+      # Find position for Zimt reference in PBXGRoup section
+      @position = 0
+      scan_to "/* Begin PBXFileReference section */"
+      begin_position = @position
+      scan_to "/* End PBXFileReference section */"
+      end_position = @position
+
+      @position = begin_position
+      while @position < end_position
+        line = self.content[@position]
+        if (line.end_with? " = {\n")
+          groupname = line.split(' ')[0]
+          if groupname > newgroup
+            break
+          end
+        end
+        @position += 1
+      end
+
+      # Add Zimt Group
+      self.content.insert(@position,
+                          "\t\t#{newgroup} /* #{file} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = #{file}; sourceTree = \"<group>\"; };\n")
 
       self.save!
       self.parse
