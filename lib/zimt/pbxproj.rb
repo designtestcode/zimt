@@ -131,7 +131,7 @@ module Zimt
     #/* Begin PBXFileReference section */
     #		C5D0CB021406C3AA002E631F /* Hans.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hans.h; sourceTree = "<group>"; };
     #/* End PBXFileReference section */
-    def add_file(file)
+    def add_file(file, file_type)
       zimt_group_id = self.zimt_group.pbxid
       # Add file to Zimt group
       groupid = self.root.mainGroup.pbxid
@@ -150,18 +150,90 @@ module Zimt
       @position = begin_position
       while @position < end_position
         line = self.content[@position]
-        if (line.end_with? " = {\n")
-          groupname = line.split(' ')[0]
-          if groupname > newgroup
-            break
-          end
+        groupname = line.split(' ')[0]
+        if groupname > newgroup
+          break
         end
         @position += 1
       end
 
       # Add Zimt Group
       self.content.insert(@position,
-                          "\t\t#{newgroup} /* #{file} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = #{file}; sourceTree = \"<group>\"; };\n")
+                          "\t\t#{newgroup} /* #{file} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = #{file_type}; path = #{file}; sourceTree = \"<group>\"; };\n")
+
+      self.save!
+      self.parse
+      return newgroup
+    end
+
+    def add_h_file(file)
+      add_file(file, "sourcecode.c.h")
+    end
+
+    def add_m_file(file)
+      fileref = self.add_file(file, "sourcecode.c.objc")
+      buildfileref = self.add_buildfile(file, fileref)
+      add_buildfileref_to_build_phase(file, buildfileref)
+    end
+
+#/* Begin PBXBuildFile section */
+#		C53D93B21406F98300F4CDDE /* Hans.m in Sources */ = {isa = PBXBuildFile; fileRef = C53D93B11406F98300F4CDDE /* Hans.m */; };
+#/* End PBXBuildFile section */
+    def add_buildfile(file, fileref)
+      newgroup = self.uuid
+      # Find position for Zimt reference in PBXGRoup section
+      @position = 0
+      scan_to "/* Begin PBXBuildFile section */"
+      begin_position = @position
+      scan_to "/* End PBXBuildFile section */"
+      end_position = @position
+
+      @position = begin_position
+      while @position < end_position
+        line = self.content[@position]
+        groupname = line.split(' ')[0]
+        if groupname > newgroup
+          break
+        end
+        @position += 1
+      end
+
+      # Add Zimt Group
+      self.content.insert(@position,
+                          "\t\t#{newgroup} /* #{file} in Sources */ = {isa = PBXBuildFile; fileRef = #{fileref} /* #{file} */; };\n")
+
+      self.save!
+      self.parse
+      return newgroup
+    end
+
+    #/* Begin PBXSourcesBuildPhase section */
+    #		8D11072C0486CEB800E47090 /* Sources */ = {
+    #			files = (
+    #				C53D93B21406F98300F4CDDE /* Hans.m in Sources */,
+    #			);
+    #		C56D96C81385E71800070608 /* Sources */ = {
+    #/* End PBXSourcesBuildPhase section */
+    def add_buildfileref_to_build_phase(file, buildfileref)
+      @position = 0
+      scan_to "/* Begin PBXSourcesBuildPhase section */"
+      begin_position = @position
+      scan_to "/* End PBXSourcesBuildPhase section */"
+      end_position = @position
+
+      @position = begin_position
+      while @position < end_position
+        line = self.content[@position]
+        if (line.end_with? " = {\n")
+          old_position = @position
+          scan_to("			);\n")
+          self.content.insert(@position,
+                              "				#{buildfileref} /* #{file} in Sources */,\n")
+          @position = old_position + 1 # offset for added line
+          break
+        end
+        @position += 1
+      end
 
       self.save!
       self.parse
