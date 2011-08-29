@@ -1,3 +1,3 @@
 module Zimt
-  VERSION = "0.0.3" # See http://semver.org/
+  VERSION = "0.0.4" # See http://semver.org/
 end
