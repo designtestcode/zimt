@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.version     = Zimt::VERSION
   s.authors     = ["Martin Schürrer"]
   s.email       = ["martin@schuerrer.org"]
-  s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.homepage    = "https://github.com/zimt/zimt"
+  s.summary     = "Zimt is a collection of Cocoa extensions with clever package management"
+  s.description = "Zimt downloads and adds files to your .xcodeproj."
 
   s.rubyforge_project = "zimt"
 
