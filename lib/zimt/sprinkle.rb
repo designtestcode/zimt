@@ -21,7 +21,7 @@ module Zimt
 
     def install
       puts "Installing #{name}"
-      FileUtils.mkdir "Zimt"
+      FileUtils.mkdir "Zimt" if not File.exists? "Zimt"
       Zimt.pbxproj.ensure_zimt_group
       files.each do |url|
         file = Pathname.new(URI.parse(url).path).basename('.sprinkle.yml').to_s

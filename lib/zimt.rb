@@ -3,6 +3,7 @@ require 'json'
 require 'open-uri'
 require 'pathname'
 require 'thor'
+require 'yaml'
 require "zimt/cli"
 require "zimt/pbxproj"
 require "zimt/sprinkle"
