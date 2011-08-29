@@ -11,8 +11,13 @@ require "zimt/version"
 
 module Zimt
   def self.xcodeproj
-    @xcodeproj ||= find_xcodeproj
-    raise "Could not locate .xcodeproj" unless @xcodeproj
+    begin
+      @xcodeproj ||= find_xcodeproj
+      raise "Could not locate .xcodeproj" unless @xcodeproj
+    rescue => e
+      puts e
+      exit
+    end
     Pathname.new(@xcodeproj)
   end
 
@@ -39,6 +44,7 @@ module Zimt
       filenames = Dir.glob(File.join(current, '*.xcodeproj'))
       raise "More than one .xcodeproj found: #{filenames}" if filenames.length > 1
       filename = filenames.first
+      raise "Could not find .xcodeproj.\nYou need to execute zimt in the source directory" if filename.nil?
       return filename if File.directory?(filename) and File.file?(File.join(filename, 'project.pbxproj'))
       current, previous = File.expand_path("..", current), current
     end
