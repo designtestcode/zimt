@@ -157,9 +157,16 @@ module Zimt
         @position += 1
       end
 
+      # Escape filename
+      if not file.match /^[A-Za-z0-9.]+$/
+        escaped_file = "\"#{file}\""
+      else
+        escaped_file = file
+      end
+
       # Add Zimt Group
       self.content.insert(@position,
-                          "\t\t#{newgroup} /* #{file} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = #{file_type}; path = #{file}; sourceTree = \"<group>\"; };\n")
+                          "\t\t#{newgroup} /* #{file} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = #{file_type}; path = #{escaped_file}; sourceTree = \"<group>\"; };\n")
 
       self.save!
       self.parse
