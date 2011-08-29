@@ -3,7 +3,7 @@ module Zimt
     desc "add SPRINKLE", "Adds the sprinkle"
     def add(name)
       sprinkle = Sprinkle.get(name)
-      # TODO
+      sprinkle.install
     rescue OpenURI::HTTPError
       puts 'Sprinkle not found'
     end

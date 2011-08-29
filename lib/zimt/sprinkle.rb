@@ -1,5 +1,3 @@
-require 'open-uri'
-
 module Zimt
   class Sprinkle
     attr_accessor :name, :url, :files
@@ -19,6 +17,25 @@ module Zimt
       @name = spec["name"]
       @url = spec["url"]
       @files = spec["files"]
+    end
+
+    def install
+      puts "Installing #{name}"
+      FileUtils.mkdir "Zimt"
+      Zimt.pbxproj.ensure_zimt_group
+      files.each do |url|
+        file = Pathname.new(URI.parse(url).path).basename('.sprinkle.yml').to_s
+        puts "Adding #{file}..."
+        open(Pathname.new("Zimt").join(file), "w") do |io|
+          io.write(open(url).read)
+        end
+        if file.end_with? ".m"
+          Zimt.pbxproj.add_m_file(file)
+        else
+          Zimt.pbxproj.add_h_file(file)
+        end
+      end
+      puts "All done"
     end
   end
 end
