@@ -1,8 +1,10 @@
 require 'json'
+require 'open-uri'
 require 'pathname'
 require 'thor'
 require "zimt/cli"
 require "zimt/pbxproj"
+require "zimt/sprinkle"
 require "zimt/version"
 
 module Zimt
