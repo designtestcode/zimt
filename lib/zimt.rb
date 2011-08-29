@@ -1,3 +1,4 @@
+require 'cgi'
 require 'fileutils'
 require 'json'
 require 'open-uri'
