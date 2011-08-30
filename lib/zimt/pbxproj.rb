@@ -12,6 +12,10 @@ module Zimt
       @buffer
     end
 
+
+    FILE_FORMATS = { '.png' => 'image.png',
+                     '.plist' => 'text.plist.xml' }
+
     # Documentation on PBXObjectId by @tjw
     # http://lists.apple.com/archives/projectbuilder-users/2003/Jan/msg00263.html
     #
@@ -132,6 +136,7 @@ module Zimt
     #		C5D0CB021406C3AA002E631F /* Hans.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hans.h; sourceTree = "<group>"; };
     #/* End PBXFileReference section */
     def add_file(file, file_type)
+      @position = 0
       zimt_group_id = self.zimt_group.pbxid
       # Add file to Zimt group
       groupid = self.root.mainGroup.pbxid
@@ -179,14 +184,21 @@ module Zimt
 
     def add_m_file(file)
       fileref = self.add_file(file, "sourcecode.c.objc")
-      buildfileref = self.add_buildfile(file, fileref)
-      add_buildfileref_to_build_phase(file, buildfileref)
+      buildfileref = self.add_buildfile(file, fileref, "Sources")
+      add_buildfileref_to_build_phase(file, buildfileref, "Sources")
+    end
+
+    def add_resource_file(file)
+      file_type = FILE_FORMATS[Pathname.new(file).extname.downcase] || 'text'
+      fileref = self.add_file(file, file_type)
+      buildfileref = self.add_buildfile(file, fileref, "Resources")
+      add_buildfileref_to_build_phase(file, buildfileref, "Resources")
     end
 
 #/* Begin PBXBuildFile section */
 #		C53D93B21406F98300F4CDDE /* Hans.m in Sources */ = {isa = PBXBuildFile; fileRef = C53D93B11406F98300F4CDDE /* Hans.m */; };
 #/* End PBXBuildFile section */
-    def add_buildfile(file, fileref)
+    def add_buildfile(file, fileref, filetype)
       newgroup = self.uuid
       # Find position for Zimt reference in PBXGRoup section
       @position = 0
@@ -207,7 +219,7 @@ module Zimt
 
       # Add Zimt Group
       self.content.insert(@position,
-                          "\t\t#{newgroup} /* #{file} in Sources */ = {isa = PBXBuildFile; fileRef = #{fileref} /* #{file} */; };\n")
+                          "\t\t#{newgroup} /* #{file} in #{filetype} */ = {isa = PBXBuildFile; fileRef = #{fileref} /* #{file} */; };\n")
 
       self.save!
       self.parse
@@ -221,11 +233,11 @@ module Zimt
     #			);
     #		C56D96C81385E71800070608 /* Sources */ = {
     #/* End PBXSourcesBuildPhase section */
-    def add_buildfileref_to_build_phase(file, buildfileref)
+    def add_buildfileref_to_build_phase(file, buildfileref, phase_name)
       @position = 0
-      scan_to "/* Begin PBXSourcesBuildPhase section */"
+      scan_to "/* Begin PBX#{phase_name}BuildPhase section */"
       begin_position = @position
-      scan_to "/* End PBXSourcesBuildPhase section */"
+      scan_to "/* End PBX#{phase_name}BuildPhase section */"
       end_position = @position
 
       @position = begin_position
@@ -235,7 +247,7 @@ module Zimt
           old_position = @position
           scan_to("			);\n")
           self.content.insert(@position,
-                              "				#{buildfileref} /* #{file} in Sources */,\n")
+                              "				#{buildfileref} /* #{file} in #{phase_name} */,\n")
           @position = old_position + 1 # offset for added line
           break
         end
