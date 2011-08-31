@@ -137,9 +137,8 @@ module Zimt
     #/* End PBXFileReference section */
     def add_file(file, file_type)
       @position = 0
-      zimt_group_id = self.zimt_group.pbxid
       # Add file to Zimt group
-      groupid = self.root.mainGroup.pbxid
+      zimt_group_id = self.zimt_group.pbxid
       scan_to "\t\t#{zimt_group_id}"
       scan_to "\t\t\t);"
       newgroup = self.uuid
