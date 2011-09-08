@@ -73,6 +73,20 @@ module Zimt
       self.root.mainGroup.children.select{ |g| g.path == 'Zimt' }.first
     end
 
+    def license_file
+      return unless self.zimt_group
+      self.zimt_group.children.select { |g| g.path == '3rdPartyLicenses.txt' }
+    end
+
+    def ensure_license_file
+      self.ensure_zimt_group
+      FileUtils.mkdir "Zimt" if not File.exists? "Zimt"
+      if self.license_file.first.nil?
+        self.add_resource_file('3rdPartyLicenses.txt')
+        FileUtils.touch('Zimt/3rdPartyLicenses.txt')
+      end
+    end
+
     def ensure_zimt_group
       zimt_group = self.zimt_group
       if zimt_group.nil?
