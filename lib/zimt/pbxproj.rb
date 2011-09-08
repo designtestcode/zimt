@@ -34,7 +34,7 @@ module Zimt
     def uuid
       # TODO
       @prefix ||= randhex(4)
-      @suffix ||= Time.now.to_i.to_s(16).upcase + randhex(8)
+      @suffix ||= randhex(16)
       @count ||= randhex(4).to_i(16)
       @count += 1
       if @count.to_s(16).length > 4
@@ -43,6 +43,9 @@ module Zimt
       uuid = "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
       if uuid.length != 24
         puts "uuid length wrong: #{uuid}"
+        puts @prefix
+        puts @suffix
+        puts @count
         exit
       end
       uuid
