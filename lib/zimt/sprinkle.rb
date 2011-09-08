@@ -31,7 +31,7 @@ module Zimt
         end
         if file.end_with? ".m"
           Zimt.pbxproj.add_m_file(file)
-        else if file.end_with? ".h"
+        elsif file.end_with? ".h"
           Zimt.pbxproj.add_h_file(file)
         else
           Zimt.pbxproj.add_resource_file(file)
