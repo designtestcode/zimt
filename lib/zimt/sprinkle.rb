@@ -59,6 +59,8 @@ EOF
       end
 
       if(spec["license"] || spec["copyright"])
+        puts "Licensed under #{spec["license"]}"
+        Zimt.pbxproj.ensure_license_file
         open(Pathname.new("Zimt").join("3rdPartyLicenses.txt"), "a") do |io|
           io.write "License for #{name}:\n\n"
           io.write spec["copyright"]
