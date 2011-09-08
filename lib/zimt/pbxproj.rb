@@ -35,10 +35,10 @@ module Zimt
       # TODO
       @prefix ||= randhex(4)
       @suffix ||= Time.now.to_i.to_s(16).upcase + randhex(8)
-      @count ||= rand(16**4)
+      @count ||= randhex(4).to_i(16)
       @count += 1
-      if @count.to_s(16).length < 4
-        @count = @count * 16
+      if @count.to_s(16).length > 4
+        @count = randhex(4).to_i(16)
       end
       uuid = "#{@prefix}#{@count.to_s(16).upcase}#{@suffix}"
       if uuid.length != 24
